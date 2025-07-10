@@ -11,6 +11,8 @@ SELECT
 FROM PatientStay AS ps
 WHERE ps.Hospital IN ('kingston','PRUH')
 AND ps.Ward LIKE '%surgery'
+AND ps.AdmittedDate BETWEEN '2024-02-27' AND '2024-03-01'
+AND ps.tariff > 5
 ORDER BY 
     ps.AdmittedDate DESC, 
     ps.PatientId DESC
