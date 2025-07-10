@@ -1,8 +1,8 @@
 SELECT 
       ps.PatientId
     , ps.Hospital
-    , PS.Ward
-    , PS.Ethnicity
+    , ps.Ward
+    , ps.Ethnicity
     , DATEADD (WEEK, -2, ps.AdmittedDate) AS ReminderDate
     , ps.AdmittedDate 
     , ps.DischargeDate
@@ -17,3 +17,33 @@ ORDER BY
     ps.AdmittedDate DESC, 
     ps.PatientId DESC
 
+SELECT
+    ps.hospital
+    , ps.Ward
+    , COUNT(*) AS NumberOfPatients
+    , SUM (ps.tariff) AS TotalTariff
+    , AVG (ps.tariff) AS AvgTariff
+FROM PatientStay AS ps 
+GROUP BY ps.Hospital
+    , ps.Ward
+ORDER BY
+    NumberOfPatients DESC
+
+SELECT * FROM DimHospitalBad
+
+SELECT 
+  ps.PatientId
+  , ps.AdmittedDate
+  , ps.Hospital
+  , H.Hospital
+  , h.HospitalSize
+FROM patientStay ps LEFT JOIN DimHospitalBad h ON ps.Hospital = h.Hospital
+
+SELECT
+  ps.PatientId 
+  ,ps.AdmittedDate
+  ,h.Hospital 
+  ,h.HospitalSize
+FROM
+  PatientStay ps
+  LEFT JOIN DimHospitalBad h ON ps.Hospital = h.Hospital
