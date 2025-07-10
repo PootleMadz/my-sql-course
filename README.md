@@ -1,1 +1,1 @@
-# my-sql-course
+# my-sql-course!
