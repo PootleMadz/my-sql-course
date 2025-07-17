@@ -106,7 +106,7 @@ SELECT
 	m.MessageId
 	, m.Colour
 	, m.Style
-	, COALESCE(m.Colour, m.Style,  'Nothing to see here') AS CombineCoalesce
+	, COALESCE(m.Colour, m.Style,  'Nothing to see here') AS CombineCoalesce 
 FROM
 	Message m;
  
@@ -136,4 +136,92 @@ SELECT
 	, SUM(CASE WHEN Colour IS NOT NULL THEN 1 ELSE 0 END) NumMessagesWithColourPresent 
 FROM Message m
 GROUP BY m.Region;
+
+-- use case for coverting NULLS to a value
+ 
+-- missing values in report
+SELECT
+    m.Colour
+    ,count(*) AS NumberOfMessages
+FROM
+    Message m
+GROUP BY m.Colour;
+ 
+-- no missing values in report
+SELECT
+    ISNULL(m.Colour, 'No Colour') AS FullColour
+    ,count(*) AS NumberOfMessages
+FROM
+    Message m
+GROUP BY ISNULL(m.Colour, 'No Colour');
+ 
+-- put in a case statement
+with cte as (
+SELECT
+    m.MessageId
+    , m.Colour
+    , ISNULL(m.Colour, 'No Colour') AS FullColour
+FROM
+    Message m)
+select
+    cte.FullColour
+    ,count(*) AS NumberOfMessages
+FROM
+    cte
+GROUP BY cte.FullColour;
+ 
+ 
+-- NULLS exercise
+ 
+/*
+ * Add a WHERE clause to the SQL query below to filter to those patients for whom 
+ ethnicity is not known  
+*/
+SELECT
+    ps.PatientId
+    , ps.Ethnicity
+FROM
+    PatientStay ps
+WHERE ps.ethnicity IS NULL
+ 
+/*
+ * Improve the SQL query below so that the values of the EthnicityIsNull calculated column is 'Not Known' rather than NULL
+ * Use the ISNULL() function
+*/
+
+SELECT
+    ps.PatientId
+    , ps.Ethnicity
+    , ISNULL(ps.Ethnicity, 'Not Known') AS EthnicityIfNull
+FROM
+    PatientStay ps ;
+
+ 
+/*
+ * Improve the SQL query below so that the values of the EthnicityCoalesce calculated column is 'Not Known' rather than NULL
+ * Use the COALESCE() function
+*/
+
+SELECT
+    ps.PatientId
+    , ps.Ethnicity
+    , COALESCE(ps.Ethnicity, 'Not Known') AS EthnicityCoalesce
+FROM
+    PatientStay ps ;
+ 
+ 
+/*
+ * Summarise the PatientStay table in a query that returns one row and two columns named:
+ * NumberOfPatients
+ * NumberOfPatientsWithKnownEthnicity
+*/
+ SELECT
+    COUNT(*) AS NumberOfPatients
+    FROM PatientStay p
+ 
+SELECT
+    COUNT(p.Ethnicity) AS NumberOfPatients
+    FROM PatientStay p
+ 
+ 
  
