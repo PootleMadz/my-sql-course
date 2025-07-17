@@ -27,10 +27,42 @@ SELECT
     p.TransactionDate
     ,p.Price
     ,p.Street
+    ,p.PropertyType
 FROM PricePaidSW12 p
 WHERE 
-    p.Street = 'Cambray Road'
-  AND p.Price BETWEEN 400000 AND 500000
-  AND p.TransactionDate BETWEEN '2018-01-01' AND '2018-12-31' 
+    p.Street IN ('Cambray Road','Midmoor Road')
+  AND p.Price > 400000
+  AND p.TransactionDate BETWEEN '2017-01-01' AND '2018-12-31' 
+  AND p.PropertyType = 'T'
 ORDER BY p.TransactionDate;
+
+-- Write a SQL query that lists the 25 latest sales in Ormeley Road with the following fields: TransactionDate, Price, PostCode, PAON
+SELECT TOP 25
+    p.TransactionDate
+    ,p.Price    
+    ,p.PostCode
+    ,p.PAON
+    ,p.PropertyType
+FROM PricePaidSW12 AS p
+WHERE p.Street = 'Ormeley Road'
+ORDER BY p.TransactionDate DESC
+
+/* There is a table named PropertyTypeLookup . 
+This has columns PropertyTypeCode and PropertyTypeName. 
+The values in PropertyTypeCode match those in the PropertyType column of The PricePaidSW12 table.
+The values in PropertyTypeName are the full name of the property type e.g. Flat, Terraced*/
+
+SELECT * FROM PropertyTypeLookup
+
+-- Write a SQL query that joins on table  PropertyTypeLookup to include column PropertyTypeName in the result.
+SELECT TOP 25
+    p.TransactionDate
+    ,p.Price    
+    ,p.PostCode
+    ,p.PAON
+    ,pt.PropertyTypeName
+FROM PricePaidSW12 p LEFT JOIN PropertyTypeLookup pt on p.PropertyType = pt.PropertyTypeCode
+WHERE p.Street = 'Ormeley Road'
+ORDER BY p.TransactionDate DESC
+
 
