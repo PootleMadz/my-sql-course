@@ -65,4 +65,24 @@ FROM PricePaidSW12 p LEFT JOIN PropertyTypeLookup pt on p.PropertyType = pt.Prop
 WHERE p.Street = 'Ormeley Road'
 ORDER BY p.TransactionDate DESC
 
-
+-- add in a new field
+SELECT 
+    TOP 25
+    p.TransactionDate
+    ,p.Price
+    ,p.PostCode
+    ,p.PAON
+    ,p.propertyType
+     ,CASE p.PropertyType  -- simple
+        WHEN 'T' THEN 'Terraced'
+        WHEN 'F' THEN 'Flat'
+        ELSE 'Unkwown' 
+    END as PropertyTypeName
+    ,CASE  -- searched
+        WHEN p.propertyType IN  ('D', 'S', 'T') THEN 'Freehold'
+        ELSE 'Leasehold'
+    END as PropertyDuration
+FROM
+    PricePaidSW12 AS p
+WHERE Street = 'Ormeley Road'  -- a very nice street in Balham
+ORDER BY TransactionDate DESC
