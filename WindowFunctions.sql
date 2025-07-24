@@ -112,13 +112,113 @@ SELECT
     , ps.AdmittedDate
     , ps.Tariff
     , ROW_NUMBER() OVER (ORDER BY ps.PatientId) AS PatientIndex
---  , ROW_NUMBER() OVER (PARTITION BY ps.Hospital ORDER BY ps.PatientId) AS PatientByHospitalIndex
---  ,COUNT(*) OVER (PARTITION BY ps.Hospital order by ps.PatientId)  as PatientByHospitalIndexAlt -- An alternative way of indexing
+    , ROW_NUMBER() OVER (PARTITION BY ps.Hospital ORDER BY ps.PatientId) AS PatientByHospitalIndex
+    , COUNT(*) OVER (PARTITION BY ps.Hospital order by ps.PatientId)  as PatientByHospitalIndexAlt -- An alternative way of indexing
 FROM
     PatientStay ps
 ORDER BY
-    --ps.Hospital
-    ps.PatientId DESC;
+    ps.Hospital
+    , ps.PatientId;
+ /*
+Compare ROW_NUMBER(), RANK() and DENSE_RANK() where there are ties
+ROW_NUMBER() will always create a monotonically  increasing sequence 1,2,3,... and arbitrarily choose one tie row over another
+RANK() will give all tie rows the same value and the rank of the next row will n higher if there are n tie rows e.g. 1,1,3,...
+DENSE_RANK() will give all tie rows the same value and the rank of the next row will one higher e.g. 1,1,2,...
+NTILE(10) splits into deciles
+*/
+SELECT
+    ps.PatientId
+    , ps.Tariff
+    , ROW_NUMBER() OVER (ORDER BY ps.Tariff DESC) AS PatientRowIndex
+    , RANK() OVER ( ORDER BY ps.Tariff DESC) AS PatientRank
+    , DENSE_RANK() OVER (ORDER BY ps.Tariff DESC) AS PatientDenseRank
+    , NTILE(4) OVER (ORDER BY ps.Tariff DESC) AS PatientIdDecile -- splits into groups ordered by tariff - amount of groups in brackets
+FROM
+    PatientStay ps
+ORDER BY
+    ps.Tariff DESC;
+
+ -- Use Window functions to calculate a cumulative value , or running total
+SELECT
+    ps.AdmittedDate
+    , ps.Tariff
+    , ROW_NUMBER() OVER (ORDER BY ps.AdmittedDate) AS RowIndex
+    , SUM(ps.Tariff) OVER (ORDER BY ps.AdmittedDate) AS RunningTariff
+    , ROW_NUMBER() OVER (PARTITION BY DATENAME(MONTH, ps.AdmittedDate) ORDER BY ps.AdmittedDate) AS MonthIndex
+    , SUM(ps.Tariff) OVER (PARTITION BY DATENAME(MONTH, ps.AdmittedDate) ORDER BY ps.AdmittedDate) AS MonthToDateTariff
+FROM
+    PatientStay ps
+WHERE
+    ps.Hospital = 'Oxleas'
+    AND ps.Ward = 'Dermatology'
+ORDER BY
+    ps.AdmittedDate; 
+ 
+WITH cte
+AS (
+SELECT
+    ps.AdmittedDate
+    , DATENAME(MONTH, ps.AdmittedDate) AS MonthAdmitted
+    , ps.Tariff
+FROM
+    PatientStay ps
+WHERE
+    ps.Hospital = 'Oxleas'
+    AND ps.Ward = 'Dermatology')
+SELECT
+    cte.MonthAdmitted
+    , cte.AdmittedDate
+    , cte.Tariff
+    , ROW_NUMBER() OVER (PARTITION BY cte.MonthAdmitted ORDER BY cte.AdmittedDate) AS RowIndex
+    , SUM(cte.Tariff) OVER (PARTITION BY cte.MonthAdmitted ORDER BY cte.AdmittedDate) AS RunningTariff
+FROM
+    cte;
+ 
+/*
+Other special functions are LEAD() and LAG()
+LAG gets the value from the previous row in the window
+Use this for example to calculate the change of a balance or inventory level from  one day to the next
+*/
+SELECT
+    ps.AdmittedDate
+    , ps.Tariff
+    , LEAD(ps.Tariff) OVER (ORDER BY ps.AdmittedDate) AS NextDayTariff
+    , LAG(ps.Tariff) OVER (ORDER BY ps.AdmittedDate) AS PreviousDayTariff
+    , ps.Tariff - LAG(ps.Tariff) OVER (ORDER BY ps.AdmittedDate) AS ChangeOnPreviousDate
+FROM
+    PatientStay ps
+WHERE
+    ps.Hospital = 'Oxleas'
+    AND ps.Ward = 'Dermatology';
+ 
+/*
+Find the running total of the tariff by date for each hospital
+Firstly we must group by Hospital and Date in a CTE  
+*/
+WITH cte
+AS (
+SELECT
+    ps.Hospital
+    , ps.AdmittedDate
+    , SUM(ps.Tariff) AS TotalTariff
+FROM
+    PatientStay ps
+GROUP BY
+    ps.Hospital
+    , ps.AdmittedDate)
+SELECT
+    cte.Hospital
+    , cte.AdmittedDate
+    , cte.TotalTariff
+    , SUM(cte.TotalTariff) OVER (PARTITION BY cte.Hospital ORDER BY cte.AdmittedDate) AS RunningTariff
+    , ROW_NUMBER() OVER (PARTITION BY cte.Hospital ORDER BY cte.AdmittedDate) AS TariffIndex
+FROM
+    cte
+ORDER BY
+    cte.Hospital
+    , cte.AdmittedDate;
+ 
+ 
  
   
 
