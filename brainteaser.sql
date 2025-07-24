@@ -48,3 +48,17 @@ FROM
 WHERE bm.MessageId IN (SELECT  MessageId FROM d)
 ORDER BY bm.MessageId;
 
+---- Missing message IDs
+
+SELECT 
+*
+FROM(
+SELECT 
+*
+FROM
+    Tally T
+WHERE n<=(SELECT MAX(MessageId) FROM BadMessage))t
+LEFT JOIN BadMessage bm 
+ON t.N = bm.MessageId
+WHERE bm.MessageId IS NULL
+ORDER BY t.N

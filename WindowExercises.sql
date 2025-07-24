@@ -85,22 +85,29 @@ Create a resultset with
 * four columns: Country, DateRecorded, DailyCases and Ranking
 * 12 rows (4 rows for each country with Ranking of 1,2,and 3
 */
+
 WITH
-    cte
+    UK (DateRecorded, DailyCases, Country, Ranking)
     AS
     (
 SELECT
     cc.Country
     , cc.DateRecorded
     , cc.DailyCases
+    ,RANK() OVER (PARTITION BY Country ORDER BY cc.DailyCases DESC) AS Ranking
 FROM
     CovidCase cc
     )
-SELECT
-    *
+SELECT 
+    uk.Country
+    ,uk.DateRecorded
+    ,uk.DailyCases
+    ,uk.Ranking
 FROM
-    cte
- 
+    uk
+WHERE uk.Ranking<3
+ORDER BY Ranking;
+
 /*
 Advanced Section
 */
@@ -153,3 +160,20 @@ FROM
 ORDER BY
     cc.Country
     , cc.DateRecorded;
+
+    /*
+Calculate the seven day moving average of cases by country
+Create a resultset with four columns: Country, DateRecorded, DailyCases and CumulativeCases
+*/
+SELECT
+    cc.DateRecorded
+    , cc.Country
+    , cc.DailyCases
+    , SUM(cc.DailyCases) OVER (PARTITION BY cc.Country ORDER BY cc.DateRecorded) CumulativeCases
+    , AVG(cc.DailyCases) OVER (PARTITION BY cc.Country ORDER BY cc.DateRecorded ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) SevenDayMovingAverageCases
+FROM
+    CovidCase cc
+ORDER BY
+    cc.Country
+    , cc.DateRecorded;
+ 
